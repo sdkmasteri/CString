@@ -3,25 +3,19 @@
 //REGION @CASE
 void toupperex(PCString self)
 {
-	if (self)
-	{
-		do {
-			if (*self->str >= 'a' && *self->str <= 'z')
-				*self->str -= 32;
-		} while (*self->str++);
-		self->str -= self->length + 1;
-	}
+	do {
+		if (*self->str >= 'a' && *self->str <= 'z')
+			*self->str -= 32;
+	} while (*self->str++);
+	self->str -= self->length + 1;
 }
 void tolowerex(PCString self)
 {
-	if (self)
-	{
-		do {
-			if (*self->str >= 'A' && *self->str <= 'Z')
-				*self->str += 32;
-		} while (*self->str++);
-		self->str -= self->length + 1;
-	};
+	do {
+		if (*self->str >= 'A' && *self->str <= 'Z')
+			*self->str += 32;
+	} while (*self->str++);
+	self->str -= self->length + 1;
 }
 void capitalize(char* str)
 {
@@ -83,20 +77,22 @@ void capall(PCString self)
 BOOL swap(PCString self, PCString csptr)
 {
 	PCString tmp = malloc(sizeof(CString));
-	if (tmp)
+	if (!tmp)
 	{
-		tmp->str = self->str;
-		tmp->length = self->length;
-
-		self->str = csptr->str;
-		self->length = csptr->length;
-
-		csptr->str = tmp->str;
-		csptr->length = tmp->length;
 		free(tmp);
-		return TRUE;
+		return FALSE;
 	}
-	return FALSE;
+
+	tmp->str = self->str;
+	tmp->length = self->length;
+
+	self->str = csptr->str;
+	self->length = csptr->length;
+
+	csptr->str = tmp->str;
+	csptr->length = tmp->length;
+	free(tmp);
+	return TRUE;
 }
 
 PCString duple(PCString cstr)
@@ -107,7 +103,11 @@ PCString duple(PCString cstr)
 PCString makeptr(PCString cstr)
 {
 	char* ptr = malloc(sizeof(CString));
-	if (!ptr) return NULL;
+	if (!ptr)
+	{
+		free(ptr);
+		return NULL;
+	}
 
 	char* csptr = (char*)cstr;
 
@@ -115,6 +115,31 @@ PCString makeptr(PCString cstr)
 		ptr[i] = csptr[i];
 
 	return (PCString)ptr;
+}
+
+void appendex(PCString self, const char* str)  
+{  
+   int len = length(str);  
+   char* ptr = realloc(self->str, self->length + len + 1);
+   if (!ptr)
+   {
+	   free(ptr);
+	   return NULL;
+   }
+   self->str = ptr;
+   ptr += self->length;
+   for (int i = 0; i < len; i++)  
+   {  
+       *ptr++ = str[i];  
+   }  
+   *ptr = '\0';  
+   self->length += len;  
+}
+
+void mergeex(PCString self, PCString cstr)
+{
+	self->Append(self, cstr->str);
+	FREECSTR(cstr)
 }
 //REGION END @MEMORY
 
@@ -146,8 +171,7 @@ BOOL removeex(PCString self, char ch)
 int removemulti(PCString self, char ch, int count)
 {
 	int removed = 0;
-	if (count == 0) return count;
-	if (count < 0)
+	if (count <= 0)
 		while (removeex(self, ch)) removed++;
 	else
 		for (removed; removed < count; removed++)
@@ -174,8 +198,7 @@ BOOL replaceex(PCString self, char ch, char rpl)
 int replacemulti(PCString self, char ch, char rpl, int count)
 {
 	int replaced = 0;
-	if (count == 0) return 0;
-	if (count < 0)
+	if (count <= 0)
 	{
 		while (replaceex(self, ch, rpl)) replaced++;
 	}
@@ -191,6 +214,29 @@ int replacemulti(PCString self, char ch, char rpl, int count)
 int replaceall(PCString self, char ch, char rpl)
 {
 	return replacemulti(self, ch, rpl, -1);
+}
+
+void insertex(PCString self, char ch, int ind)
+{
+	if (ind < 0 || ind > self->length) return;
+	self->length++;
+	char* ptr = malloc(self->length + 2);
+	if (!ptr)
+	{
+		free(ptr);
+		return;
+	}
+	char* ptr1 = ptr;
+
+	for (int i = 0; i < self->length; i++)
+	{
+		if (i == ind)
+			*ptr1++ = ch;
+		*ptr1++ = self->str[i];
+	}
+	*ptr1 = '\0';
+	free(self->str);
+	self->str = ptr;
 }
 //REGION END @EDIT
 
@@ -223,6 +269,9 @@ PCString cstring(const char* str)
 		cstr->Replace = replaceex;
 		cstr->ReplaceMulti = replacemulti;
 		cstr->ReplaceAll = replaceall;
+		cstr->Append = appendex;
+		cstr->Merge = mergeex;
+		cstr->Insert = insertex;
 
 		char* p = cstr->str;
 		while (*str)

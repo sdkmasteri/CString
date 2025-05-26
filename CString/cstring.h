@@ -26,15 +26,18 @@ struct CString
 	BOOL	(*Replace)(PCString, char, char);
 	int		(*ReplaceMulti)(PCString, char, char, int);
 	int		(*ReplaceAll)(PCString, char, char);
+	void	(*Append)(PCString, const char*);
+	void	(*Merge)(PCString, PCString);
+	void	(*Insert)(PCString, char, int);
 };
 
 PCString cstring(const char* str);
 PCString duple(PCString);
 PCString makeptr(PCString);
 
-#define UPTEXT(cstr) cstr->ToUpper(cstr);
-#define LOWTEXT(cstr) cstr->ToLower(cstr);
-#define CAPTEXT(cstr) cstr->Capitalize(cstr);
-#define CAPALLTEXT(cstr) cstr->Capall(cstr);
-
+#define UPCSTR(cstr) cstr->ToUpper(cstr);
+#define LOWCSTR(cstr) cstr->ToLower(cstr);
+#define CAPCSTR(cstr) cstr->Capitalize(cstr);
+#define CAPALLCSTR(cstr) cstr->Capall(cstr);
+#define FREECSTR(cstr) cstr->Free(cstr);
 #endif // CSTRING_H
