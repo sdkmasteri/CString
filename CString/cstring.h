@@ -29,6 +29,10 @@ struct CString
 	void	(*Append)(PCString, const char*);
 	void	(*Merge)(PCString, PCString);
 	void	(*Insert)(PCString, char, int);
+	BOOL	(*Compare)(PCString, PCString);
+	BOOL	(*Contain)(PCString, const char*);
+	int		(*ToInt)(PCString);
+	int		(*FindInt)(PCString);
 };
 
 PCString cstring(const char* str);
@@ -40,4 +44,5 @@ PCString makeptr(PCString);
 #define CAPCSTR(cstr) cstr->Capitalize(cstr);
 #define CAPALLCSTR(cstr) cstr->Capall(cstr);
 #define FREECSTR(cstr) cstr->Free(cstr);
+#define TOINTCSTR(cstr) cstr->ToInt(cstr);
 #endif // CSTRING_H

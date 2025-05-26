@@ -49,7 +49,15 @@ char* findchr(char* str, char ch)
 	int i = findi(str, ch);
 	return i >= 0 ? (char*)(str + i) : NULL;
 }
-
+char* findbetween(char* str, char ch1, char ch2)
+{
+	for (int i = 0;; i++)
+	{
+		if (*(str + i) == '\0') break;
+		if (*(str + i) >= ch1 && *(str + i) <= ch2) return (char*)(str + i);
+	}
+	return NULL;
+}
 int findiex(PCString self, char ch)
 {
 	return findi(self->str, ch);
@@ -182,7 +190,7 @@ int removemulti(PCString self, char ch, int count)
 }
 int removeall(PCString self, char ch)
 {
-	return removemulti(self, ch, -1);
+	return removemulti(self, ch, 0);
 }
 
 BOOL replaceex(PCString self, char ch, char rpl)
@@ -213,7 +221,7 @@ int replacemulti(PCString self, char ch, char rpl, int count)
 }
 int replaceall(PCString self, char ch, char rpl)
 {
-	return replacemulti(self, ch, rpl, -1);
+	return replacemulti(self, ch, rpl, 0);
 }
 
 void insertex(PCString self, char ch, int ind)
@@ -239,6 +247,81 @@ void insertex(PCString self, char ch, int ind)
 	self->str = ptr;
 }
 //REGION END @EDIT
+
+//REGION @TEST
+BOOL cmpstr(const char* str1, const char* str2)
+{
+	//if (*str1 != *str2) return FALSE;
+	const unsigned char* p1 = (const unsigned char*)str1;
+	const unsigned char* p2 = (const unsigned char*)str2;
+	for (; *p1 && *p1 == *p2; ++p1, ++p2);
+
+	return (!*p1) || (*p1 == *p2);
+}
+BOOL cmpstrex(PCString self, PCString cstr)
+{
+	return cmpstr(self->str, cstr->str);
+}
+BOOL contain(PCString self, const char* str)
+{
+	char* ptr = findchrex(self, *str);
+	if (!ptr)
+	{
+		free(ptr);
+		return FALSE;
+	}
+	while (ptr != NULL)
+	{
+		if (cmpstr(str, ptr))
+		{
+			return TRUE;
+		}
+		ptr = findchr((char*)(ptr+1), *str);
+	}
+	return FALSE;
+}
+//REGION END @TEST
+
+//REGION @CAST
+int toint(PCString self)
+{
+	int result = 0;
+	char* ptr = self->str;
+	if (*ptr == '-') ptr++;
+	if (*ptr < '0' || *ptr > '9') return 0;
+	for (;;)
+	{
+		if (*ptr < '0' || *ptr > '9') break;
+		result = result * 10 + (*ptr - '0');
+		ptr++;
+	}
+	if (*(self->str) == '-') result = -result;
+	return result;
+}
+
+int findintex(PCString self)
+{
+	int result = 0;
+	char* ptr = findbetween(self->str, '0', '9');
+	if (ptr == NULL) return 0;
+
+	int x = 1;
+	if (*(ptr - 1) == '-') x = -x;
+	for (;;)
+	{
+		if (*ptr < '0' || *ptr > '9') break;
+		ptr++;
+	}
+	while (ptr--)
+	{
+		if (*ptr < '0' || *ptr > '9') break;
+		result += (*ptr - '0') * x;
+		x *= 10;
+	}
+	return result;
+}
+
+//REGION END @CAST
 
 //REGION @INIT_DESTROY
 void csdestroy(PCString self)
@@ -272,6 +355,10 @@ PCString cstring(const char* str)
 		cstr->Append = appendex;
 		cstr->Merge = mergeex;
 		cstr->Insert = insertex;
+		cstr->Compare = cmpstrex;
+		cstr->Contain = contain;
+		cstr->ToInt = toint;
+		cstr->FindInt = findintex;
 
 		char* p = cstr->str;
 		while (*str)
