@@ -33,6 +33,8 @@ struct CString
 	BOOL	(*Contain)(PCString, const char*);
 	int		(*ToInt)(PCString);
 	int		(*FindInt)(PCString);
+	char*	(*Start)(PCString);
+	char*	(*End)(PCString);
 };
 
 PCString cstring(const char* str);

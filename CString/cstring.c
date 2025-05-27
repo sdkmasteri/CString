@@ -1,5 +1,48 @@
 #include "cstring.h"
 
+//REGION @UTILS
+
+//since char is 1 byte long we can just use pointer diff to calc length
+size_t length(char* str)
+{
+	char* ptr = str;
+	while (*++ptr);
+	return ptr - str;
+}
+char* findchr(char* str, char ch)
+{
+	int i = findi(str, ch);
+	return i >= 0 ? (char*)(str + i) : NULL;
+}
+char* findbetween(char* str, char ch1, char ch2)
+{
+	for (int i = 0;; i++)
+	{
+		if (*(str + i) == '\0') break;
+		if (*(str + i) >= ch1 && *(str + i) <= ch2) return (char*)(str + i);
+	}
+	return NULL;
+}
+int findiex(PCString self, char ch)
+{
+	return findi(self->str, ch);
+}
+char* findchrex(PCString self, char ch)
+{
+	return findchr(self->str, ch);
+}
+
+char* startex(PCString self)
+{
+	return self->str;
+}
+
+char* endex(PCString self)
+{
+	return self->str + self->length;
+}
+//REGION END @UTILS
+
 //REGION @CASE
 void toupperex(PCString self)
 {
@@ -36,35 +79,6 @@ int findi(char* str, char ch)
 		if (*(str + i) == ch) return i;
 	}
 	return -1;
-}
-int length(char* str)
-{
-	int len = 0;
-	while (str[len]) len++;
-	return len;
-}
-
-char* findchr(char* str, char ch)
-{
-	int i = findi(str, ch);
-	return i >= 0 ? (char*)(str + i) : NULL;
-}
-char* findbetween(char* str, char ch1, char ch2)
-{
-	for (int i = 0;; i++)
-	{
-		if (*(str + i) == '\0') break;
-		if (*(str + i) >= ch1 && *(str + i) <= ch2) return (char*)(str + i);
-	}
-	return NULL;
-}
-int findiex(PCString self, char ch)
-{
-	return findi(self->str, ch);
-}
-char* findchrex(PCString self, char ch)
-{
-	return findchr(self->str, ch);
 }
 
 void capall(PCString self)
@@ -125,25 +139,6 @@ PCString makeptr(PCString cstr)
 	return (PCString)ptr;
 }
 
-void appendex(PCString self, const char* str)  
-{  
-   int len = length(str);  
-   char* ptr = realloc(self->str, self->length + len + 1);
-   if (!ptr)
-   {
-	   free(ptr);
-	   return NULL;
-   }
-   self->str = ptr;
-   ptr += self->length;
-   for (int i = 0; i < len; i++)  
-   {  
-       *ptr++ = str[i];  
-   }  
-   *ptr = '\0';  
-   self->length += len;  
-}
-
 void mergeex(PCString self, PCString cstr)
 {
 	self->Append(self, cstr->str);
@@ -168,9 +163,8 @@ BOOL removeex(PCString self, char ch)
 	}
 	*ptr = '\0';
 	//free(self->str);
-	self->length--;
-	self->str = realloc(self->str, self->length);
 
+	self->str = realloc(self->str, self->length--);
 	//self->str = result;
 
 	return TRUE;
@@ -245,6 +239,24 @@ void insertex(PCString self, char ch, int ind)
 	*ptr1 = '\0';
 	free(self->str);
 	self->str = ptr;
+}
+void appendex(PCString self, const char* str)
+{
+	int len = length(str);
+	char* ptr = realloc(self->str, self->length + len + 1);
+	if (!ptr)
+	{
+		free(ptr);
+		return NULL;
+	}
+	self->str = ptr;
+	ptr += self->length;
+	for (int i = 0; i < len; i++)
+	{
+		*ptr++ = str[i];
+	}
+	*ptr = '\0';
+	self->length += len;
 }
 //REGION END @EDIT
 
@@ -332,7 +344,7 @@ void csdestroy(PCString self)
 PCString cstring(const char* str)
 {
 	PCString cstr = malloc(sizeof(CString));
-	if (cstr)
+	if (cstr && *str)
 	{
 		int len = length(str);
 
@@ -359,11 +371,14 @@ PCString cstring(const char* str)
 		cstr->Contain = contain;
 		cstr->ToInt = toint;
 		cstr->FindInt = findintex;
+		cstr->Start = startex;
+		cstr->End = endex;
 
 		char* p = cstr->str;
 		while (*str)
 			*p++ = *str++;
 		*p = '\0';
+
 		return cstr;
 	}
 	free(cstr);
